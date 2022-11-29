@@ -6,8 +6,12 @@ namespace Game.Enemy
 {
     internal class EnemyModel
     {
-        private float _defaultBitrhTime;
-        private float _defaultDeathTime;
+        private readonly GameModel _gameMode;
+        private readonly float _defaultBitrhTime;
+        private readonly float _defaultDeathTime;
+        private readonly float _defaultSpeed;
+        private readonly int _defaultHealth;
+
         private float _bitrhTime;
         private float _deathTime;
 
@@ -17,35 +21,29 @@ namespace Game.Enemy
 
         public SubscriptionProperty<Vector3> Direction { get; set; } = new SubscriptionProperty<Vector3>();
 
-        public EnemyModel(EnemyProfile enemyProfile) 
+        public EnemyModel(GameModel gameModel) 
         {
-            Speed.Value = enemyProfile.Speed;
-            Health.Value = enemyProfile.Health;
+            _gameMode = gameModel;
 
-            _defaultBitrhTime = enemyProfile.TimeToBirth;
-            _defaultDeathTime = enemyProfile.TimeToDeath;
-        }
+            _defaultBitrhTime = 2;
+            _defaultDeathTime = 2;
+            _defaultHealth = 2;
+            _defaultSpeed = 0.05f;
 
-        public void Init(SubscriptionProperty<EnemyState> state) 
-        {
-            State = state;
             Health.SubscribeOnChange(GetDeadState);
             State.SubscribeOnChange(OnChangeEnemyState);
             UpdateManager.Instance.SunscribeToFixedUpdate(Execute);
 
-            _bitrhTime = _defaultBitrhTime;
-            _deathTime = _defaultDeathTime;
+            State.Value = EnemyState.Active;
         }
 
-        private void DeInit() 
+        private void Init() 
         {
-            
-        }
-        private void Dispose() 
-        {
-            Health.UnSubscribeOnChange(GetDeadState);
-            State.UnSubscribeOnChange(OnChangeEnemyState);
-            UpdateManager.Instance.UnSunscribeToFixedUpdate(Execute);
+            Health.Value = _defaultHealth;
+            _bitrhTime = _defaultBitrhTime;
+            _deathTime = _defaultDeathTime;
+
+            _gameMode.CountOfEnemy.Value++;
         }
         private void Execute() 
         {           
@@ -56,27 +54,28 @@ namespace Game.Enemy
             if (State.Value == EnemyState.Dead)
             {
                 DeathTimer();
+                Speed.Value = 0;
             }
         }
-
         private void OnChangeEnemyState() 
         {
             switch (State.Value) 
             {
                 case EnemyState.Active:
+                    Init();
                     break;
                 case EnemyState.Born:
+                    Speed.Value = _defaultSpeed;
                     SetDirection();
                     break;
                 case EnemyState.Dead:
+                    _gameMode.CountOfEnemy.Value--;
+                    _gameMode.IncreaseScore();
                     break;
                 case EnemyState.Deactive:
-                    DeInit();
                     break;
             }
         }
-
-
         private void BirthTimer() 
         {
             _bitrhTime -= Time.fixedDeltaTime;
@@ -85,14 +84,9 @@ namespace Game.Enemy
                 State.Value = EnemyState.Born;
             }
         }
-        private void SetDirection() 
+        private void GetDeadState()
         {
-            Direction.Value = new Vector3(Random.Range(-1f, 2f), 0, Random.Range(-1f, 2f));
-        }
-
-        private void GetDeadState() 
-        {
-            if (Health.Value <= 0) 
+            if (Health.Value <= 0)
             {
                 State.Value = EnemyState.Dead;
             }
@@ -105,13 +99,20 @@ namespace Game.Enemy
                 State.Value = EnemyState.Deactive;
             }
         }
-        public void OnChangeHealth(int i)
-        {
+        private void SetDirection() =>
+            Direction.Value = new Vector3(Random.Range(-1f, 2f), 0, Random.Range(-1f, 2f));
+
+        public void OnChangeHealth(int i) =>
             Health.Value -= i;
-        }
-        public void OnChangeDirection()
-        {
+
+        public void OnChangeDirection() =>
             Direction.Value = new Vector3(Direction.Value.x * -1, 0, Direction.Value.z * -1);
+
+        public void Dispose()
+        {
+            Health.UnSubscribeOnChange(GetDeadState);
+            State.UnSubscribeOnChange(OnChangeEnemyState);
+            UpdateManager.Instance.UnSunscribeToFixedUpdate(Execute);
         }
     }
 }
