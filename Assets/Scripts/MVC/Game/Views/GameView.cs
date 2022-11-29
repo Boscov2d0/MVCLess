@@ -1,3 +1,5 @@
+using Game.Enemy;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -7,24 +9,22 @@ namespace Game
     internal class GameView : MonoBehaviour
     {
         [field: SerializeField] public Text TextScore { get; private set; }
-        [field: SerializeField] public Button ButtonPause { get; private set; }
-        private SubscriptionPropertyWhithParameter<int> _score;
+        private SubscriptionProperty<int> _score;
 
+        [field: SerializeField] public List<EnemyView> Enemies { get; private set; }
 
-        public void Init(UnityAction pause, SubscriptionPropertyWhithParameter<int> score)
+        public void Init(UnityAction pause, SubscriptionProperty<int> score)
         {
-            ButtonPause.onClick.AddListener(pause);
             _score = score;
-            _score.SunscribeOnChange(ShowScore);
+            _score.SunscribeOnChangeWhithParameter(ShowScore);
         }
-
-        private void ShowScore(int value) 
-        {
+        private void ShowScore(int value) =>
             TextScore.text = value.ToString();
-        }
+
         private void OnDestroy()
         {
-            ButtonPause.onClick.RemoveAllListeners();
+            _score.UnSubscribeOnChangeWhithParameter(ShowScore);
+            Enemies.Clear();
         }
     }
 }

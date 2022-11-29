@@ -4,27 +4,20 @@ namespace Game.Player
 {
     internal class PlayerController : DisposableObject
     {
-        private readonly string _resourcePlayerProfilePath = "Settings/PlayerProfile";
         private readonly string _resourceCameraPath = "Main Camera";
         private readonly string _resourcePlayerViewPath = "Player";
 
         private readonly Camera _camera;
-        private readonly PlayerProfile _playerProfile;
         private readonly PlayerView _playerView;
         private readonly PlayerModel _playerModel;
-        public PlayerController() 
+        public PlayerController()
         {
-            _playerProfile = LoadPlayerProfile();
             _camera = CreateCamera();
             _playerView = CreatePlayerView();
             //_camera = CreateObject<Camera>(_resourceCameraPath);
             //_playerView = CreateObject<PlayerView>(_resourceCameraPlayerViewPath);
             AddGameObject(_playerView.gameObject);
-            _playerModel = new PlayerModel(_playerProfile, _camera); 
-        }
-        private PlayerProfile LoadPlayerProfile() 
-        {
-            return Resources.Load<PlayerProfile>(_resourcePlayerProfilePath);
+            _playerModel = new PlayerModel(_camera);
         }
         private Camera CreateCamera() 
         {
@@ -40,6 +33,10 @@ namespace Game.Player
         {
             GameObject playerViewPrefab = Resources.Load<GameObject>(path);
             return GameObject.Instantiate<GameObject>(playerViewPrefab).GetComponent<T>();
+        }
+        protected override void OnDispose()
+        {
+            _playerModel.Dispose();
         }
     }
 }

@@ -4,27 +4,31 @@ namespace Game
 {
     internal class GameModel
     {
-        public readonly SubscriptionPropertyWhithParameter<GameState> CurrentState;
-        public readonly SubscriptionPropertyWhithParameter<int> Score;
-        public readonly SubscriptionPropertyWhithParameter<bool> GameIsPause;
-        private int _condition = 4;
+        public readonly SubscriptionProperty<GameState> CurrentState;
+        public readonly SubscriptionProperty<int> Score;
+        public readonly SubscriptionProperty<bool> GameIsPause;
+        public SubscriptionProperty<int> CountOfEnemy;
+        private int _condition = 0;
 
-        public GameModel(GameState initialState, int score) 
+        public GameModel() 
         {
-            CurrentState = new SubscriptionPropertyWhithParameter<GameState>();
-            CurrentState.Value = initialState;
+            CurrentState = new SubscriptionProperty<GameState>();
+            CurrentState.Value = GameState.Game;
 
-            Score = new SubscriptionPropertyWhithParameter<int>();
-            Score.Value = score;
+            Score = new SubscriptionProperty<int>();
+            Score.Value = 0;
 
-            GameIsPause = new SubscriptionPropertyWhithParameter<bool>();
-            GameIsPause.SunscribeOnChange(SetGamePause);
+            GameIsPause = new SubscriptionProperty<bool>();
+            GameIsPause.SunscribeOnChangeWhithParameter(SetGamePause);
             GameIsPause.Value = false;
+
+            CountOfEnemy = new SubscriptionProperty<int>();
+            CountOfEnemy.SunscribeOnChangeWhithParameter(GetGameCondition);
         }
 
         public void GetGameCondition(int count) 
         {
-            if (count > _condition) 
+            if (count <= _condition) 
             {
                 CurrentState.Value = GameState.Lose; 
             }
@@ -35,6 +39,14 @@ namespace Game
                 Time.timeScale = 0;
             else
                 Time.timeScale = 1;
+        }
+        public void IncreaseScore() =>
+            Score.Value++;
+
+        public void Dispose() 
+        {
+            GameIsPause.UnSubscribeOnChangeWhithParameter(SetGamePause);
+            CountOfEnemy.UnSubscribeOnChangeWhithParameter(GetGameCondition);
         }
     }
 }

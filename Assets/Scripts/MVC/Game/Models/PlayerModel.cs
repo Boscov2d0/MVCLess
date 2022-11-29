@@ -10,21 +10,19 @@ namespace Game.Player
         private RaycastHit _hit;
         private int _power;
 
-        public PlayerModel(PlayerProfile playerProfile, Camera camera) 
+        public PlayerModel(Camera camera) 
         {
             _camera = camera;
-            _power = playerProfile.Power;
+            _power = 1;
 
             Init();
         }
-        private void Init() 
-        {
+        private void Init() =>
             UpdateManager.Instance.SunscribeToUpdate(Execute);
-        }
-        private void Deinit() 
-        {
+
+        public void Dispose() =>
             UpdateManager.Instance.UnSunscribeToUpdate(Execute);
-        }
+
         public void Execute()
         {
             _ray = _camera.ScreenPointToRay(Input.mousePosition);
@@ -40,9 +38,8 @@ namespace Game.Player
                 }
             }
         }
-        private void TapOnMonster(EnemyView enemy)
-        {
+
+        private void TapOnMonster(EnemyView enemy) =>
             enemy.OnClick(_power);
-        }
     }
 }
